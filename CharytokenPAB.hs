@@ -51,8 +51,6 @@ import           Text.Printf          (printf)
 import           Plutus.Trace         as Trace
 import           Wallet.Emulator.Wallet 
 --2.Declare Variables
-minLovelace :: Integer 
-minLovelace = 2000000
 
 mytokenName :: TokenName 
 mytokenName = "Chary Token"
