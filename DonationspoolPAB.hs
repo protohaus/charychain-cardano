@@ -54,9 +54,6 @@ import           Wallet.Emulator.Wallet
 minLovelace :: Integer 
 minLovelace = 2000000
 
-mytokenName :: TokenName 
-mytokenName = "Chary Token"
-
 --3.Data Type declarations 
 data DonationDatum = DonationDatum
     { initiator :: PaymentPubKeyHash
@@ -91,9 +88,6 @@ data LotteryParams = LotteryParams
     { dlottery :: !Integer
     } deriving (Generic, ToJSON, FromJSON, ToSchema)
 
-data MintParams = MintParams
-    { mpAmount    :: !Integer
-    } deriving (Generic, ToJSON, FromJSON, ToSchema)
 --4. Validators and other functions 
 
 {-# INLINABLE firstValidator #-}
@@ -136,22 +130,6 @@ typedValidator = Scripts.mkTypedValidator @Typed
   where
     wrap = Scripts.wrapValidator @DonationDatum @()
 
---Minting Policy 
-{-# INLINABLE mkPolicy #-}
-mkPolicy :: PaymentPubKeyHash -> () -> ScriptContext -> Bool
-mkPolicy owner () ctx = txSignedBy (scriptContextTxInfo ctx) $ unPaymentPubKeyHash owner 
-
-
-policy :: PaymentPubKeyHash -> Scripts.MintingPolicy
-policy owner = mkMintingPolicyScript $
-    $$(PlutusTx.compile [|| Scripts.wrapMintingPolicy . mkPolicy ||])
-    `PlutusTx.applyCode`
-    PlutusTx.liftCode owner
-
-
-cc :: PaymentPubKeyHash -> CurrencySymbol
-cc = scriptCurrencySymbol . policy
-
 
 --7. Schema endpoints 
 type StartSchema =
@@ -159,8 +137,7 @@ type StartSchema =
         .\/ Endpoint "donate" DonateParams1
         .\/ Endpoint "getdonation" DonateParams2
         .\/ Endpoint "vote" VotingParams
-        .\/ Endpoint "dolottery" LotteryParams
-        .\/ Endpoint "mymint" MintParams 
+        .\/ Endpoint "dolottery" LotteryParams 
 
 --8. Endpoints logic 
 initiate :: AsContractError e => InitiatorParams -> Contract w s e ()
@@ -181,15 +158,6 @@ initiate i = do
     Contract.logInfo $ "initiated Donations by" <> show pkh 
     Contract.logInfo $ "this currencysymbol" <> show thiscs
 
-mymint :: MintParams -> Contract w StartSchema Text ()
-mymint mp = do
-    owner <- Contract.ownPaymentPubKeyHash
-    let val     = Value.singleton (cc owner) (mytokenName) (mpAmount mp)
-        lookups = Constraints.mintingPolicy $ policy owner
-        tx      = Constraints.mustMintValue val
-    ledgerTx <- submitTxConstraintsWith @Void lookups tx
-    void $ awaitTxConfirmed $ getCardanoTxId ledgerTx
-    Contract.logInfo @String $ printf "forged %s" (show val)
 
 donate :: AsContractError e => DonateParams1 -> Contract w s e ()
 donate d = do
@@ -419,14 +387,13 @@ getVotingWinner w =
 
 --9. Endpoints 
 endpoints :: Contract () StartSchema Text ()
-endpoints = awaitPromise (initiate' `select` donate' `select` getdonation' `select` vote' `select` dolottery' `select` mymint') >> endpoints
+endpoints = awaitPromise (initiate' `select` donate' `select` getdonation' `select` vote' `select` dolottery') >> endpoints
   where
     initiate' = endpoint @"initiate" initiate
     donate' = endpoint @"donate" donate
     getdonation' = endpoint @"getdonation" getdonation
     vote' = endpoint @"vote" vote 
     dolottery' = endpoint @"dolottery" $ dolottery
-    mymint' = endpoint @"mymint" mymint 
 
 --10.Schema Definitions 
 
