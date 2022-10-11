@@ -67,7 +67,7 @@ data DonationDatum = DonationDatum
     , projects  :: [(Integer, Integer)]
     , donations :: Integer 
     , ccamount  :: Integer
-    } deriving P.Show --projects als Liste und dann from list/to list für operationen`??
+    } deriving P.Show
 
 PlutusTx.unstableMakeIsData ''DonationDatum --this or Lift? 
 PlutusTx.makeLift ''DonationDatum
