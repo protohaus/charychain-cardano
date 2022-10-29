@@ -1,3 +1,4 @@
+--1. Extensions and Imports
 {-# LANGUAGE GADTs            #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -46,6 +47,8 @@ import           Wallet.Types                (ContractInstanceId (..))
 
 import           Week10.JustDonation       as MyContract
 import           Week10.DonationsUR        as NoRedeemer
+
+--Helperfunctions to use the CLI for transaction creation, prepare the data 
 
 dataToScriptData :: Data -> ScriptData
 dataToScriptData (Constr n xs) = ScriptDataConstructor n $ dataToScriptData <$> xs
