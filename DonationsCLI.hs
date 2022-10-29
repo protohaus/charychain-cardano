@@ -1,3 +1,4 @@
+--1.Extensions and Imports
 {-# LANGUAGE DataKinds                    #-}
 {-# LANGUAGE FlexibleContexts             #-}
 {-# LANGUAGE DeriveAnyClass               #-}
@@ -15,8 +16,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE DerivingStrategies         #-}
-
-
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
 module Week10.DonationsUR where
@@ -59,8 +58,7 @@ import           Schema               (ToSchema)
 import           Wallet.Emulator.Wallet 
 
 import           Week10.Charytoken    as Charytoken 
---2.Declare Variables
-
+--2.Declare Variables: Datum that covers all relevant Data Structures: Donors, Projects, Donations, Tokenamount 
 data DonationDatum = DonationDatum
     { initiator :: PaymentPubKeyHash
     , donors    :: [PaymentPubKeyHash]
@@ -73,23 +71,15 @@ PlutusTx.unstableMakeIsData ''DonationDatum --this or Lift?
 PlutusTx.makeLift ''DonationDatum
 
 --5. Validator Type daclarations 
-
 data Donating
 instance Scripts.ValidatorTypes Donating where 
     type instance DatumType Donating = DonationDatum
     type instance RedeemerType Donating = ()
 
-
---4. Validators and other functions 
-
-{-# INLINABLE myDatum #-}
-myDatum :: Maybe Datum -> Maybe DonationDatum
-myDatum md = do 
-    Datum d <- md 
-    PlutusTx.fromBuiltinData d
+--4. Validators and other functions
 
 {-# INLINABLE mkDonationValidator #-}
--- This should validate if and only if the two Booleans in the redeemer are equal!
+--Valdator that requires a DonationDatum
 mkDonationValidator :: DonationDatum -> () -> ScriptContext -> Bool
 mkDonationValidator dd () ctx = True
 
@@ -97,8 +87,7 @@ mkDonationValidator dd () ctx = True
     info :: TxInfo
     info = scriptContextTxInfo ctx 
 
---6. Compile the Validator 
-
+--6. Compile the Validator: Compiles to PlutusCore
 typedDonationValidator :: Scripts.TypedValidator Donating
 typedDonationValidator = Scripts.mkTypedValidator @Donating
     $$(PlutusTx.compile [|| mkDonationValidator ||])
