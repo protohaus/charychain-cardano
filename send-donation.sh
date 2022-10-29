@@ -1,3 +1,4 @@
+#Redeem Datum file with transaction and send new Datum file
 cardano-cli query protocol-parameters \
 --testnet-magic 1097911063 \
 --out-file protocol-parameters.json
