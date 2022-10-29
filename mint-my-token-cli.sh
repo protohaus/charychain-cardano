@@ -1,3 +1,5 @@
+#transaction preparation and creation for minting with own minting file
+
 ppFile=protocol-parameters.json
 cardano-cli query protocol-parameters --testnet-magic 1097911063 --out-file $ppFile
 
