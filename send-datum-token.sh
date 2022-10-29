@@ -1,3 +1,4 @@
+#transaction preparation and execution to send a Datum with fungible token to a script address
 cardano-cli query protocol-parameters \
 --testnet-magic 1097911063 \
 --out-file protocol-parameters.json
