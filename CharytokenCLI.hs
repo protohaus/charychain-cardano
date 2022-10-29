@@ -1,6 +1,5 @@
---first donate/get donations 
 
---1.Imports 
+--1.Extensions and Imports 
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE DeriveAnyClass      #-}
@@ -12,7 +11,6 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
-
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
 module Week10.Charytoken (policy, tokenCurSymbol) where
@@ -28,14 +26,12 @@ import           Ledger.Value                as Value
 mytokenName :: TokenName 
 mytokenName = "4368617279546f6b656e" --CharyToken
 
-{-myOwner :: Plutus.Address
-myOwner = -}
 
---Minting Policy 
+--Minting Policy (Validator that checks under which conditions the policy is executed)
 {-# INLINABLE mkPolicy #-}
 mkPolicy :: PaymentPubKeyHash -> TokenName -> Integer -> () -> ScriptContext -> Bool
 mkPolicy owner tn amt () ctx = traceIfFalse "wrong amount minted" checkMintedAmount -- &&
-                               --traceIfFalse "not right signer" isSigned
+                               
   where
     info :: TxInfo
     info = scriptContextTxInfo ctx
@@ -48,6 +44,7 @@ mkPolicy owner tn amt () ctx = traceIfFalse "wrong amount minted" checkMintedAmo
         [(_, tn', amt')] -> tn' == tn && amt' == amt
         _                -> False
 
+--actual policy and its compilation to Plutus Core 
 policy :: PaymentPubKeyHash -> TokenName -> Integer -> Scripts.MintingPolicy
 policy owner mytokenName amt = mkMintingPolicyScript $
     $$(PlutusTx.compile [|| \owner' mytokenName amt' -> Scripts.wrapMintingPolicy $ mkPolicy owner' mytokenName amt' ||])
@@ -58,6 +55,6 @@ policy owner mytokenName amt = mkMintingPolicyScript $
     `PlutusTx.applyCode`
     PlutusTx.liftCode amt
 
-
+--Currency Symbol
 tokenCurSymbol :: PaymentPubKeyHash -> TokenName -> Integer -> CurrencySymbol
 tokenCurSymbol owner tn = scriptCurrencySymbol . policy owner mytokenName
