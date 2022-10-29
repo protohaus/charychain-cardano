@@ -1,4 +1,3 @@
---first donate/get donations 
 
 --1.Imports 
 {-# LANGUAGE DataKinds           #-}
@@ -12,7 +11,6 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
-
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
 module MA.Charytoken (policy) where
@@ -55,39 +53,32 @@ import           Wallet.Emulator.Wallet
 mytokenName :: TokenName 
 mytokenName = "Chary Token"
 
---Parameters for the Endpoints 
-
+--Parameters for the Endpoints, here Amount of Tokens to be minted
 data MintParams = MintParams
     { mpAmount    :: !Integer
     } deriving (Generic, ToJSON, FromJSON, ToSchema)
---4. Validators and other functions 
 
---5. Validator Type daclarations 
-
---6. Compile the Validator 
-
---Minting Policy 
+--Minting Policy (with Conditiond when to execute)
 {-# INLINABLE mkPolicy #-}
 mkPolicy :: PaymentPubKeyHash -> () -> ScriptContext -> Bool
 mkPolicy owner () ctx = txSignedBy (scriptContextTxInfo ctx) $ unPaymentPubKeyHash owner 
 
-
+--actual Minting policy with compilation to Plutus Core 
 policy :: PaymentPubKeyHash -> Scripts.MintingPolicy
 policy owner = mkMintingPolicyScript $
     $$(PlutusTx.compile [|| Scripts.wrapMintingPolicy . mkPolicy ||])
     `PlutusTx.applyCode`
     PlutusTx.liftCode owner
 
-
+--Currency Symbol function
 cc :: PaymentPubKeyHash -> CurrencySymbol
 cc = scriptCurrencySymbol . policy
 
-
+--Schema to define the Endpoints
 --7. Schema endpoints 
 type FreeSchema = Endpoint "mymint" MintParams 
 
---8. Endpoints logic 
-
+--8. Endpoints logic: Minting function that creates characteristics of Tokens (L 85), Requirements of the transaction (L86-87) and submits transaction (L88-89)
 mymint :: MintParams -> Contract w FreeSchema Text ()
 mymint mp = do
     owner <- Contract.ownPaymentPubKeyHash
@@ -105,12 +96,12 @@ endpoints = mymint' >> endpoints
     mymint' = awaitPromise $ endpoint @"mymint" mymint 
 
 --10.Schema Definitions 
-
 mkSchemaDefinitions ''FreeSchema
 --11. mkKnownCurrencies 
 
 mkKnownCurrencies []
 
+--Emulator Trace to test whether the Tokens get minted 
 test::IO ()
 test = runEmulatorTraceIO $ do
     h1 <- activateContractWallet (knownWallet 1) endpoints
